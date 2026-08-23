@@ -1,7 +1,7 @@
 name: 🎛️ Mutiny TV - Normalizador Elástico de ADN Multimedia
 
 on:
-  workflow_dispatch: # Permite gatillarlo manual si querés
+  workflow_dispatch: # Permite gatillarlo manual o por relevos desde el Ladrón
     inputs:
       archivo_blanco:
         description: 'Nombre del archivo .mp4 a rescatar de la Release'
@@ -24,14 +24,13 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y ffmpeg curl jq
 
-      - name: 🛠️ Succión desde Release, Moldeado de Titanio y Re-Inyección
+      - name: 🛠️ Succión desde Release, Moldeado de Titanio y Re-Inyección Smart Split
         run: |
-          # 🪓 [REACTOR DE RELEVOS v1.0 - DIEGO NORMALIZER CORE]
+          # 🪓 [REACTOR DE RELEVOS v2.0 - DIEGO SMART SPLIT NORMALIZER CORE]
           export TERM=xterm
           TARGET="${{ github.event.inputs.archivo_blanco }}"
           
           echo "📥 FASE 1: Descargando fideo crudo desde tu propio cofre seguro..."
-          # Usamos la API nativa de GitHub CLI para bajarnos el video que subió el Ladrón 1 en un segundo sordo
           gh release download bunker_mutiny -p "$TARGET" || true
 
           if [ ! -s "$TARGET" ]; then
@@ -40,27 +39,54 @@ jobs:
           fi
 
           echo "📥 FASE 2: Aplicando el Molde de Titanio al archivo local en frío absolute..."
-          # Como el video ya está local y la red de Microsoft es inmune a cortes, FFmpeg trabaja al ras del silicio.
-          # Le clava el molde unificado de 1280x720, Keyframes cada 2 segundos (-g 60) y el peso pluma CRF-22.
           ffmpeg -y -i "$TARGET" \
             -filter_complex "[0:v]scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2,setsar=1:1[v_moldeado]" \
             -map "[v_moldeado]" -map 0:a:0? -r 30 -pix_fmt yuv420p \
             -c:v libx264 -preset ultrafast -crf 22 -g 60 -keyint_min 60 \
-            -c:a aac -b:a 128k -ac 2 -ar 44100 -async 1 "formateado_mutiny.mp4"
+            -c:a aac -b:a 128k -ac 2 -ar 44100 -async 1 "masterizado_temp.mp4"
 
-          # Purgamos el fideo pesado residual para dejar el disco rígido virtual en cero
+          # Purgamos el video crudo original del disco de Microsoft para liberar espacio
           rm -f "$TARGET"
 
-          # Le devolvemos su nombre original inmaculado
-          mv formateado_mutiny.mp4 "$TARGET"
+          # 🧠 [REPARADO v2.0 - SENSOR SMART SPLIT FIJO EN EL TIEMPO]
+          PESO_BYTES=$(stat -c%s "masterizado_temp.mp4")
+          LIMITE_BYTES=2000000000 # 2 GB rígidos de aduana comercial
           
-          echo "✅ Video normalizado a ADN Mutiny. Peso pluma definitivo:"
-          du -sh "$TARGET"
+          BASE_NAME="${TARGET%.mp4}"
 
-          echo "💾 FASE 3: Sobreescribiendo el archivo limpio adentro de la Release bunker_mutiny..."
-          # Sube el archivo pluma (400-800 MB). El flag --clobber reemplaza el pesado viejo de forma atómica.
-          gh release upload bunker_mutiny "$TARGET" --clobber
+          if [ $PESO_BYTES -gt $LIMITE_BYTES ]; then
+            echo "⚠️ [ALERTA DE HARDWARE] El archivo final pesa $(du -sh masterizado_temp.mp4 | awk '{print $1}'), superando el límite de 2 GB."
+            echo "✂️ Iniciando guillotina síncrona en dos partes exactas..."
 
-          echo "🏁 [MUTINY TV] Relevo completado. El fideo quedó idéntico y a escuadra en el estante."
+            # Calculamos la duración exacta en segundos
+            DURACION_TOTAL=$(ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:keyvalue=1=0 masterizado_temp.mp4 | awk -F. '{print $1}')
+            MITAD_TIEMPO=$((DURACION_TOTAL / 2))
+
+            echo "🎞️ Duración total: $DURACION_TOTAL segundos. Cortando en el segundo: $MITAD_TIEMPO"
+
+            # Rebanamos de forma síncrona directa a 60x sin perder un solo bit de audio latino
+            ffmpeg -y -ss 0 -i masterizado_temp.mp4 -t $MITAD_TIEMPO -c copy -map 0 "parte_1.mp4"
+            ffmpeg -y -ss $MITAD_TIEMPO -i masterizado_temp.mp4 -c copy -map 0 "${BASE_NAME}_2.mp4"
+
+            # Bautizamos la Parte 1 con el nombre original solicitado
+            mv parte_1.mp4 "$TARGET"
+            
+            # Limpiamos el residuo gigante de la RAM virtual
+            rm -f masterizado_temp.mp4
+
+            echo "💾 FASE 3: Inyectando las Dos Partes Divididas al cofre bunker_mutiny..."
+            gh release upload bunker_mutiny "$TARGET" "${BASE_NAME}_2.mp4" --clobber
+            
+            echo "✅ Guillotina y subida en lote ejecutadas deBoxes con éxito."
+            ls -lh *.mp4
+          else
+            echo "🟢 [HARDWARE SALUDABLE] El archivo procesado mide menos de 2 GB."
+            mv masterizado_temp.mp4 "$TARGET"
+            
+            echo "💾 FASE 3: Sobreescribiendo el archivo limpio de forma entera..."
+            gh release upload bunker_mutiny "$TARGET" --clobber
+          fi
+
+          echo "🏁 [MUTINY TV] Relevo completado. El estante quedó lacrado al vacío."
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
