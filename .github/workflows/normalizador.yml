@@ -24,9 +24,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y ffmpeg curl jq
 
-      - name: 🛠️ Succión desde Release, Moldeado de Titanio y Re-Inyección Smart Split
+      - name: 🛠️ Succión desde Release, Moldeado de Titanio y Re-Inyección Smart Split por Peso
         run: |
-          # 🪓 [REACTOR DE RELEVOS v2.0 - DIEGO SMART SPLIT NORMALIZER CORE]
+          # 🪓 [REACTOR DE RELEVOS v4.0 - DIEGO SEGMENT WEIGHT CORE]
           export TERM=xterm
           TARGET="${{ github.event.inputs.archivo_blanco }}"
           
@@ -45,48 +45,54 @@ jobs:
             -c:v libx264 -preset ultrafast -crf 22 -g 60 -keyint_min 60 \
             -c:a aac -b:a 128k -ac 2 -ar 44100 -async 1 "masterizado_temp.mp4"
 
-          # Purgamos el video crudo original del disco de Microsoft para liberar espacio
+          # Purgamos el fideo crudo viejo para liberar el almacenamiento virtual
           rm -f "$TARGET"
 
-          # 🧠 [REPARADO v2.0 - SENSOR SMART SPLIT FIJO EN EL TIEMPO]
+          # 🧠 SENSOR DE PESO BIÓNICO POR FRACCIONAMIENTO ESTRICTO DE ME_G_A_S
           PESO_BYTES=$(stat -c%s "masterizado_temp.mp4")
-          LIMITE_BYTES=2000000000 # 2 GB rígidos de aduana comercial
+          LIMITE_BYTES=2000000000 # 2 GB rígidos de aduana de la API
           
           BASE_NAME="${TARGET%.mp4}"
 
           if [ $PESO_BYTES -gt $LIMITE_BYTES ]; then
-            echo "⚠️ [ALERTA DE HARDWARE] El archivo final pesa $(du -sh masterizado_temp.mp4 | awk '{print $1}'), superando el límite de 2 GB."
-            echo "✂️ Iniciando guillotina síncrona en dos partes exactas..."
+            echo "⚠️ [ALERTA DE HARDWARE] El video final pesa $(du -sh masterizado_temp.mp4 | awk '{print $1}'), superando el límite de 2 GB."
+            echo "✂️ Activando guillotina inteligente por peso a bloques estrictos de 1.9 GB..."
 
-            # Calculamos la duración exacta en segundos
-            DURACION_TOTAL=$(ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:keyvalue=1=0 masterizado_temp.mp4 | awk -F. '{print $1}')
-            MITAD_TIEMPO=$((DURACION_TOTAL / 2))
+            # 🧠 EL REMACHE MAESTRO DE DIEGO: Usamos el segmentador nativo por tamaño de archivo.
+            # -segment_size 1900M -> Cierra el archivo y abre el otro estrictamente al tocar los 1900 MB de disco.
+            # %d -> Genera los nombres en fila india (0, 1, etc.) para que la consola los bueyee de novela.
+            ffmpeg -i masterizado_temp.mp4 -c copy -map 0 \
+                   -f segment -segment_size 1900M -reset_timestamps 1 "${BASE_NAME}_part_%d.mp4"
 
-            echo "🎞️ Duración total: $DURACION_TOTAL segundos. Cortando en el segundo: $MITAD_TIEMPO"
-
-            # Rebanamos de forma síncrona directa a 60x sin perder un solo bit de audio latino
-            ffmpeg -y -ss 0 -i masterizado_temp.mp4 -t $MITAD_TIEMPO -c copy -map 0 "parte_1.mp4"
-            ffmpeg -y -ss $MITAD_TIEMPO -i masterizado_temp.mp4 -c copy -map 0 "${BASE_NAME}_2.mp4"
-
-            # Bautizamos la Parte 1 con el nombre original solicitado
-            mv parte_1.mp4 "$TARGET"
-            
-            # Limpiamos el residuo gigante de la RAM virtual
+            # Limpiamos la lona de la RAM virtual borrando el residuo gigante
             rm -f masterizado_temp.mp4
 
-            echo "💾 FASE 3: Inyectando las Dos Partes Divididas al cofre bunker_mutiny..."
-            gh release upload bunker_mutiny "$TARGET" "${BASE_NAME}_2.mp4" --clobber
+            # 🧠 RE-CALIBRACIÓN RÍGIDA DE NOMBRES SEGÚN TU LEY DE BOXES:
+            # Traducimos los nombres del segmentador (part_0, part_1) a tu formato clásico unificado:
+            # El pedazo 0 se queda con el nombre original limpio. El pedazo 1 se queda con tu distintivo _2.mp4
+            if [ -f "${BASE_NAME}_part_0.mp4" ]; then
+               mv "${BASE_NAME}_part_0.mp4" "$TARGET"
+            fi
+            if [ -f "${BASE_NAME}_part_1.mp4" ]; then
+               mv "${BASE_NAME}_part_1.mp4" "${BASE_NAME}_2.mp4"
+            fi
+            if [ -f "${BASE_NAME}_part_2.mp4" ]; then
+               mv "${BASE_NAME}_part_2.mp4" "${BASE_NAME}_3.mp4"
+            fi
+
+            echo "💾 FASE 3: Inyectando las partes divididas estrictamente por peso al cofre..."
+            gh release upload bunker_mutiny *.mp4 --clobber
             
-            echo "✅ Guillotina y subida en lote ejecutadas deBoxes con éxito."
+            echo "✅ Guillotina molecular por peso ejecutada con éxito absoluto."
             ls -lh *.mp4
           else
-            echo "🟢 [HARDWARE SALUDABLE] El archivo procesado mide menos de 2 GB."
+            echo "🟢 [HARDWARE SALUDABLE] El archivo mide menos de 2 GB."
             mv masterizado_temp.mp4 "$TARGET"
             
             echo "💾 FASE 3: Sobreescribiendo el archivo limpio de forma entera..."
             gh release upload bunker_mutiny "$TARGET" --clobber
           fi
 
-          echo "🏁 [MUTINY TV] Relevo completado. El estante quedó lacrado al vacío."
+          echo "🏁 [MUTINY TV] Relevo por peso completado. El estante quedó lacrado."
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
