@@ -1,16 +1,7 @@
-name: 📡 d3strmdrm
+name: 📡 Mutiny TV - Ladrón de Contenido Síncrono Masivo Automatizado v7.0
 
 on:
-  workflow_dispatch: # Botón manual de PLAY en la web de GitHub con 2 casilleros
-    inputs:
-      url_pirata:
-        description: 'Chorizo de link a clonar (m3u8, mp4, mkv)'
-        required: true
-        default: 'PONER_URL_AQUÍ'
-      nombre_pelicula:
-        description: 'Nombre del archivo final terminado strictly en .mp4'
-        required: true
-        default: 'estreno_mutiny.mp4'
+  workflow_dispatch: # Se prende con un único botón de PLAY manual en la web de GitHub
 
 permissions:
   contents: write
@@ -23,45 +14,67 @@ jobs:
       - name: 🗄️ Inicializando espacio en el disco virtual de Microsoft
         uses: actions/checkout@v4
 
-      - name: ⚙️ Instalando herramientas de disección multimedia por hardware
+      # Instalamos las herramientas de disección multimedia por hardware nativas
+      - name: ⚙️ Instalando herramientas de disección multimedia
         run: |
           sudo apt-get update
           sudo apt-get install -y ffmpeg curl jq
 
-      - name: 🚀 Clonación Satelital Síncrona Ultra-HD a la RAM Local
+      - name: 🚀 Bucle Automatizado - Extracción en Cadena e Inmune a Bloqueos de Tamaño
         run: |
-          # 🪓 [REACTOR CENTRAL INDUSTRIAL - DIEGO LOCAL FIXED]
+          # 🪓 [REACTOR INTEGRADO v7.0 - DIEGO GIST PARSER & PURGE CORE]
           export TERM=xterm
           
-          echo "📥 Descargando fideo digital útil con embrague síncrono de audio..."
-          ffmpeg -y -headers "User-Agent: VLC/3.0.18 LibVLC/3.0.18" \
-            -reconnect 1 -reconnect_at_eof 1 -reconnect_streamed 1 -reconnect_delay_max 5 \
-            -i "${{ github.event.inputs.url_pirata }}" -c:v copy -c:a aac -ac 2 -ar 44100 -async 1 \
-            -bsf:a aac_adtstoasc "${{ github.event.inputs.nombre_pelicula }}" || true
-
-          if [ ! -s "${{ github.event.inputs.nombre_pelicula }}" ]; then
-             echo "❌ El caño de red se congeló o el link caducó en internet. Abortando."
-             exit 1
-          fi
+          echo "📡 [MUTINY TV] SUCCIONANDO ÓRDENES DE TRABAJO DESDE EL GIST..."
           
-          echo "✅ Película clonada al 100% de calidad Bluray original. Peso total:"
-          du -sh "${{ github.event.inputs.nombre_pelicula }}"
+          # 1. Chupamos tu playlist de descargas desde tu nuevo Gist privado de luc45sky-ops
+          curl -s "https://gist.githubusercontent.com/gest1mutiny/b983c09c1ceb718ea02f840216d12415/raw/gistfile1.txt" | tr -d '\r' | sed '/^$/d' > ordenes_bunker.txt
+          
+          contador=1
+          
+          # 2. El descriptor de archivos 3 (<&3) blinda el bucle para que ffmpeg no se robe renglones
+          while read -r linea <&3 || [ -n "$linea" ]; do
+            URL_PIRATA=$(echo "$linea" | awk -F'|' '{print $1}' | tr -d ' ')
+            NOMBRE_FINAL=$(echo "$linea" | awk -F'|' '{print $2}' | tr -d ' ')
+            
+            if [ -n "$URL_PIRATA" ] && [ -n "$NOMBRE_FINAL" ]; then
+              echo "------------------------------------------------------------"
+              echo "🍿 [PROCESANDO TRABAJO N° $contador]: $NOMBRE_FINAL"
+              echo "🔗 Link de Origen: $URL_PIRATA"
+              echo "------------------------------------------------------------"
+              
+              echo "📥 FASE 1: Clonación Satelital Síncrona Directa a la RAM..."
+              # Usamos el comando exacto de tu script funcional que clava el audio y evita el delay
+              ffmpeg -y -nostdin -headers "User-Agent: VLC/3.0.18 LibVLC/3.0.18" \
+                -reconnect 1 -reconnect_at_eof 1 -reconnect_streamed 1 -reconnect_delay_max 5 \
+                -i "$URL_PIRATA" -c:v copy -c:a aac -ac 2 -ar 44100 -async 1 \
+                -bsf:a aac_adtstoasc "$NOMBRE_FINAL" || true
 
-      - name: 💾 Inyectando el Video Intacto en las Releases Locales de esta Cuenta
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: "bunker_mutiny"
-          name: "📦 Mutiny TV - Base de Datos Privada Soberana"
-          body: "Aquí viven tus películas resguardadas eternas en calidad Ultra-HD y audio síncrono perfecto, listas para transmitir o usar en Surge."
-          files: "${{ github.event.inputs.nombre_pelicula }}"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      # 🧠 [EL REMACHE MAESTRO DIEGO TWO-STAGE CORE]: 
-      # Gatilla el segundo workflow pasándole el nombre exacto del archivo que acabamos de subir.
-      - name: 🚀 Disparando Segundo Tiempo - El Normalizador de ADN Mutiny
-        run: |
-          echo "Disparando el formateador elástico en background..."
-          gh workflow run "normalizador.yml" -f archivo_blanco="${{ github.event.inputs.nombre_pelicula }}"
+              # Verificación de chapa anti-archivo vacío
+              if [ ! -s "$NOMBRE_FINAL" ]; then
+                 echo "⚠️ El caño de red falló o el link caducó para el Renglón $contador. Saltando..."
+                 rm -f "$NOMBRE_FINAL"
+                 contador=$((contador + 1))
+                 continue
+              fi
+              
+              echo "✅ Película clonada al 100%. Peso total del binario:"
+              du -sh "$NOMBRE_FINAL"
+              
+              echo "💾 FASE 2: Inyectando el Video Intacto en las Releases usando la API oficial..."
+              # Usamos la fuerza de gh de forma unitaria para subir el archivo limpio
+              gh release upload bunker_mutiny "$NOMBRE_FINAL" --clobber || echo "⚠️ Falló la subida de chapa."
+              
+              echo "🪓 FASE 3: EL SEGURO DE TITANIO - PURGA TOTAL DEL DISCO EN CALIENTE..."
+              # Rompemos el archivo local procesado. El espacio en disco de Microsoft vuelve a 0 MB
+              # absolutos antes de que empiece a leer el siguiente renglón del Gist.
+              rm -f "$NOMBRE_FINAL"
+              
+              echo "✅ TRABAJO N° $contador COMPLETADO CON ÉXITO ABSOLUTO."
+              contador=$((contador + 1))
+            fi
+          done 3< ordenes_bunker.txt # Canal de lectura blindado rígido de boxes
+          
+          echo "🏁 [MUTINY TV] Toda la cartelera del Gist fue clonada de largo fluido. Estante lleno."
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
